@@ -44,7 +44,7 @@ always @(posedge pxClk or negedge I_rst_n) begin
     if(!I_rst_n) 
         colors <= 24'd0;
     else begin
-        case(myThing[6:4])
+        case(hor[6:4])
             3'b000: colors <= WHITE;
             3'b001: colors <= YELLOW;
             3'b010: colors <= CYAN;
