@@ -10,8 +10,8 @@ module video_top (
 // Define and initialize signals
 wire [11:0] ver;
 wire [11:0] hor;
-reg [23:0] colors;
-wire         pxClk;
+reg  [23:0] colors;
+wire        pxClk;
 
 // Instantiate video_controller module (assuming its definition is included or defined elsewhere)
 video_controller video(
@@ -39,12 +39,12 @@ localparam BLUE    = {8'd255 , 8'd0   , 8'd0   };
 localparam BLACK   = {8'd0   , 8'd0   , 8'd0   };
 
 
-// Always block to set colors based on hor[6:4]
+
 always @(posedge pxClk or negedge I_rst_n) begin
     if(!I_rst_n) 
         colors <= 24'd0;
     else begin
-        case(hor[6:4])
+        case(myThing[6:4])
             3'b000: colors <= WHITE;
             3'b001: colors <= YELLOW;
             3'b010: colors <= CYAN;

@@ -1,9 +1,9 @@
--d C:\Users\bas\Desktop\TangNano-20K-example-main\hdmi\impl\gwsynthesis\hdmi.vg
+-d C:\Workspace\tang-nano-9k-HDMI\impl\gwsynthesis\hdmi.vg
 -p GW1NR-9C-QFN88P-6
 -pn GW1NR-LV9QN88PC6/I5
--cst C:\Users\bas\Desktop\TangNano-20K-example-main\hdmi\src\hdmi.cst
--cfg C:\Users\bas\Desktop\TangNano-20K-example-main\hdmi\impl\pnr\device.cfg
--sdc C:\Users\bas\Desktop\TangNano-20K-example-main\hdmi\src\nano_20k_video.sdc
+-cst C:\Workspace\tang-nano-9k-HDMI\src\hdmi.cst
+-cfg C:\Workspace\tang-nano-9k-HDMI\impl\pnr\device.cfg
+-sdc C:\Workspace\tang-nano-9k-HDMI\src\nano_20k_video.sdc
 -bit
 -tr
 -ph
