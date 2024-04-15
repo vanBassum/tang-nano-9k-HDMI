@@ -53,6 +53,12 @@ wire[7:0]                        rx_data;
 wire                             rx_data_valid;
 reg                              rx_data_enable;
 
+
+reg [7:0] buffer [0:7];
+reg [2:0] index;
+reg [2:0] send;
+
+localparam                       IDLE       =  0;
 localparam                       SEND       =  1;
 localparam                       RECEIVE    =  2;
 reg[3:0]                         state;
@@ -62,32 +68,52 @@ always@(posedge I_clk or negedge I_rst_n)
 begin
 	if(I_rst_n == 1'b0)
 	begin
-		state <= RECEIVE;
+		state <= IDLE;
 	end
 	else
 	case(state)
 
+        IDLE:   
+        begin
+            index <= 0;
+            tx_data_valid <= 0;
+            state <= RECEIVE;
+        end
+
         RECEIVE:
         begin
-            tx_data_valid   <= 0;   // Stop transmitter
-            rx_data_enable  <= 1;   // Start receiver
+            rx_data_enable  <= 1;               // Enable receiver
 
             if(rx_data_valid) begin
-                tx_data <= rx_data; // Setup data for echo
-                state <= SEND;      // Data received so move to sending
+                buffer[index] <= rx_data;
+                if(rx_data == 8'h0A)
+                begin
+                    state <= SEND;
+                    send <= 0;
+                end
+                else
+                    index <= index + 1;         //TODO Overflow check
             end
         end
 
 		SEND:
 		begin
-            tx_data_valid   <= 1;   // Start transmitter
-            rx_data_enable  <= 0;   // Stop receiver
-            
-            state <= RECEIVE;       // Go back to listening
-		end
 
+            if(tx_data_ready) begin             // Ready to send
+                if(send >= index) begin
+                    state <= IDLE;
+                end else begin
+                    tx_data <= buffer[send];
+                    tx_data_valid <= 1;
+                    send <= send + 1;
+                end
+
+            end else begin
+                tx_data_valid <= 0;
+            end
+		end
 		default:
-			state <= RECEIVE;
+			state <= IDLE;
 	endcase
 end
 
@@ -137,7 +163,8 @@ always @(posedge pxClk or negedge I_rst_n) begin
     if(!I_rst_n) 
         colors <= 24'd0;
     else begin
-        case(hor[7:5])
+        colors <= {buffer[0][3:0], buffer[1][3:0], buffer[2][3:0], buffer[3][3:0], buffer[4][3:0], buffer[5][3:0]};
+        /*case(hor[7:5])
             3'b000: colors <= WHITE;
             3'b001: colors <= YELLOW;
             3'b010: colors <= CYAN;
@@ -147,7 +174,7 @@ always @(posedge pxClk or negedge I_rst_n) begin
             3'b110: colors <= BLUE;
             3'b111: colors <= BLACK;
             default: colors <= BLUE; // Default to black for undefined values
-        endcase
+        endcase*/
     end
 end
 
