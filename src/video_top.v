@@ -4,8 +4,101 @@ module video_top (
     output            O_tmds_clk_p    ,
     output            O_tmds_clk_n    ,
     output     [2:0]  O_tmds_data_p   , // {r,g,b}
-    output     [2:0]  O_tmds_data_n   
+    output     [2:0]  O_tmds_data_n   ,
+    input               uart_rx       ,
+    output              uart_tx       ,
+    output     [0:5]  led
+
 );
+
+
+parameter                        CLK_FRE  = 27;//Mhz
+parameter                        UART_FRE = 115200;//Mhz
+
+
+
+uart_rx#
+(
+	.CLK_FRE(CLK_FRE),
+	.BAUD_RATE(UART_FRE)
+) uart_rx_inst
+(
+	.clk                        (I_clk ),         //clock input                          
+	.rst_n                      (I_rst_n ),       //asynchronous reset input, low active 
+	.rx_data                    (rx_data ),       //received serial data
+	.rx_data_valid              (rx_data_valid ), //received serial data is valid
+	.rx_data_ready              (rx_data_enable ),//data receiver module ready
+	.rx_pin                     (uart_rx )        //serial data input                    
+);
+
+uart_tx#
+(
+	.CLK_FRE(CLK_FRE),
+	.BAUD_RATE(UART_FRE)
+) uart_tx_inst
+(
+	.clk                        (I_clk ),         //clock input
+	.rst_n                      (I_rst_n ),       //asynchronous reset input, low active 
+	.tx_data                    (tx_data ),       //data to send
+	.tx_data_valid              (tx_data_valid ), //data to be sent is valid
+	.tx_data_ready              (tx_data_ready ), //send ready
+	.tx_pin                     (uart_tx )        //serial data output                     
+);
+
+
+reg[7:0]                         tx_data;
+reg                              tx_data_valid;
+wire                             tx_data_ready;
+wire[7:0]                        rx_data;
+wire                             rx_data_valid;
+reg                              rx_data_enable;
+
+localparam                       SEND       =  1;
+localparam                       RECEIVE    =  2;
+reg[3:0]                         state;
+
+
+always@(posedge I_clk or negedge I_rst_n)
+begin
+	if(I_rst_n == 1'b0)
+	begin
+		state <= RECEIVE;
+	end
+	else
+	case(state)
+
+        RECEIVE:
+        begin
+            tx_data_valid   <= 0;   // Stop transmitter
+            rx_data_enable  <= 1;   // Start receiver
+
+            if(rx_data_valid) begin
+                tx_data <= rx_data; // Setup data for echo
+                state <= SEND;      // Data received so move to sending
+            end
+        end
+
+		SEND:
+		begin
+            tx_data_valid   <= 1;   // Start transmitter
+            rx_data_enable  <= 0;   // Stop receiver
+            
+            state <= RECEIVE;       // Go back to listening
+		end
+
+		default:
+			state <= RECEIVE;
+	endcase
+end
+
+
+
+
+
+
+
+
+
 
 // Define and initialize signals
 wire [11:0] ver;
@@ -44,7 +137,7 @@ always @(posedge pxClk or negedge I_rst_n) begin
     if(!I_rst_n) 
         colors <= 24'd0;
     else begin
-        case(hor[6:4])
+        case(hor[7:5])
             3'b000: colors <= WHITE;
             3'b001: colors <= YELLOW;
             3'b010: colors <= CYAN;
