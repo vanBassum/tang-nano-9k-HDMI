@@ -50,7 +50,10 @@ ram myRam1(
     .IO_psram_rwds(IO_psram_rwds),
     .IO_psram_dq(IO_psram_dq),
     .O_psram_reset_n(O_psram_reset_n),
-    .O_psram_cs_n(O_psram_cs_n)
+    .O_psram_cs_n(O_psram_cs_n),
+
+    .c1(led[0]),
+    .c2(led[1])
 
 );
 
@@ -123,7 +126,7 @@ always @(posedge video_pxClk) begin
         ram1_wr <= 0;
         ram1_oe <= 1;
         ram1_addr <= video_hor[8:5];
-        video_color = {255, ram1_dout, ram1_dout};
+        video_color = {255, ram1_dout};
     end
 end
 
