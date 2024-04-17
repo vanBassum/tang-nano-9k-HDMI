@@ -12,125 +12,56 @@ module video_top (
 );
 
 
-parameter                        CLK_FRE  = 27;//Mhz
-parameter                        UART_FRE = 115200;//Mhz
 
-
-
-uart_rx#
+Control control
 (
-	.CLK_FRE(CLK_FRE),
-	.BAUD_RATE(UART_FRE)
-) uart_rx_inst
-(
-	.clk                        (I_clk ),         //clock input                          
-	.rst_n                      (I_rst_n ),       //asynchronous reset input, low active 
-	.rx_data                    (rx_data ),       //received serial data
-	.rx_data_valid              (rx_data_valid ), //received serial data is valid
-	.rx_data_ready              (rx_data_enable ),//data receiver module ready
-	.rx_pin                     (uart_rx )        //serial data input                    
+	.clk(I_clk),              //clock input
+	.rst_n(I_rst_n),            //asynchronous reset input, low active 
+    .rx(uart_rx),
+    .data(ctrl_data),
+    .address(ctrl_addr),
+    .wr(ctrl_wr),
+    .sel(ctrl_sel)
 );
 
-uart_tx#
-(
-	.CLK_FRE(CLK_FRE),
-	.BAUD_RATE(UART_FRE)
-) uart_tx_inst
-(
-	.clk                        (I_clk ),         //clock input
-	.rst_n                      (I_rst_n ),       //asynchronous reset input, low active 
-	.tx_data                    (tx_data ),       //data to send
-	.tx_data_valid              (tx_data_valid ), //data to be sent is valid
-	.tx_data_ready              (tx_data_ready ), //send ready
-	.tx_pin                     (uart_tx )        //serial data output                     
+wire [7:0] ctrl_data;
+wire [3:0] ctrl_addr;
+wire       ctrl_wr;
+wire       ctrl_sel;
+
+
+ram myRam1(
+    .clk(ram1_clk),
+    .oe(ram1_oe),
+    .wr(ram1_wr),
+    .address(ram1_addr),
+    .data_in(ram1_din),
+    .data_out(ram1_dout)
 );
 
+wire       ram1_clk;
+wire       ram1_oe;
+wire       ram1_wr;
+wire [3:0] ram1_addr;
+wire [7:0] ram1_din;
+wire [7:0] ram1_dout;
 
-reg[7:0]                         tx_data;
-reg                              tx_data_valid;
-wire                             tx_data_ready;
-wire[7:0]                        rx_data;
-wire                             rx_data_valid;
-reg                              rx_data_enable;
+ram myRam2(
+    .clk(ram2_clk),
+    .oe(ram2_oe),
+    .wr(ram2_wr),
+    .address(ram2_addr),
+    .data_in(ram2_din),
+    .data_out(ram2_dout)
+);
 
+wire       ram2_clk;
+wire       ram2_oe;
+wire       ram2_wr;
+wire [3:0] ram2_addr;
+wire [7:0] ram2_din;
+wire [7:0] ram2_dout;
 
-reg [7:0] buffer [0:7];
-reg [2:0] index;
-reg [2:0] send;
-
-localparam                       IDLE       =  0;
-localparam                       SEND       =  1;
-localparam                       RECEIVE    =  2;
-reg[3:0]                         state;
-
-
-always@(posedge I_clk or negedge I_rst_n)
-begin
-	if(I_rst_n == 1'b0)
-	begin
-		state <= IDLE;
-	end
-	else
-	case(state)
-
-        IDLE:   
-        begin
-            index <= 0;
-            tx_data_valid <= 0;
-            state <= RECEIVE;
-        end
-
-        RECEIVE:
-        begin
-            rx_data_enable  <= 1;               // Enable receiver
-
-            if(rx_data_valid) begin
-                buffer[index] <= rx_data;
-                if(rx_data == 8'h0A)
-                begin
-                    state <= SEND;
-                    send <= 0;
-                end
-                else
-                    index <= index + 1;         //TODO Overflow check
-            end
-        end
-
-		SEND:
-		begin
-
-            if(tx_data_ready) begin             // Ready to send
-                if(send >= index) begin
-                    state <= IDLE;
-                end else begin
-                    tx_data <= buffer[send];
-                    tx_data_valid <= 1;
-                    send <= send + 1;
-                end
-
-            end else begin
-                tx_data_valid <= 0;
-            end
-		end
-		default:
-			state <= IDLE;
-	endcase
-end
-
-
-
-
-
-
-
-
-
-
-// Define and initialize signals
-wire [11:0] ver;
-wire [11:0] hor;
-reg  [23:0] colors;
-wire        pxClk;
 
 // Instantiate video_controller module (assuming its definition is included or defined elsewhere)
 video_controller video(
@@ -140,42 +71,48 @@ video_controller video(
     .O_tmds_clk_n(O_tmds_clk_n),
     .O_tmds_data_p(O_tmds_data_p),
     .O_tmds_data_n(O_tmds_data_n),
-    .O_ver_cnt(ver),
-    .O_hor_cnt(hor),
-    .I_color_data(colors),
-    .O_px_clk(pxClk)
+    .O_ver_cnt(video_ver),
+    .O_hor_cnt(video_hor),
+    .I_color_data(video_color),
+    .O_px_clk(video_pxClk)
 );
 
 
-// Color parameters
-localparam WHITE   = {8'd255 , 8'd255 , 8'd255 }; // {B,G,R}
-localparam YELLOW  = {8'd0   , 8'd255 , 8'd255 };
-localparam CYAN    = {8'd255 , 8'd255 , 8'd0   };
-localparam GREEN   = {8'd0   , 8'd255 , 8'd0   };
-localparam MAGENTA = {8'd255 , 8'd0   , 8'd255 };
-localparam RED     = {8'd0   , 8'd0   , 8'd255 };
-localparam BLUE    = {8'd255 , 8'd0   , 8'd0   };
-localparam BLACK   = {8'd0   , 8'd0   , 8'd0   };
+wire [11:0] video_ver;
+wire [11:0] video_hor;
+wire [23:0] video_color;
+wire        video_pxClk;
+
+wire [7:0]  data;
+wire [3:0]  video_addr;
+
+assign video_addr = {video_hor[6:5], video_ver[6:5]};
+
+// Sel == 1 then ram1 is on ctrl
+
+assign ram1_clk =  ctrl_sel ? I_clk : video_pxClk;
+assign ram2_clk = !ctrl_sel ? I_clk : video_pxClk;
+
+assign ram1_wr =  ctrl_sel ? ctrl_wr : 0;
+assign ram2_wr = !ctrl_sel ? ctrl_wr : 0;
+
+assign ram1_oe =  ctrl_sel ? 0 : 1;
+assign ram2_oe = !ctrl_sel ? 0 : 1;
+
+assign ram1_addr =  ctrl_sel ? ctrl_addr : video_addr;
+assign ram2_addr = !ctrl_sel ? ctrl_addr : video_addr;
+
+assign ram1_din = ctrl_data;
+assign ram2_din = ctrl_data;
+
+assign data = ctrl_sel ? ram2_dout : ram1_dout;
+assign video_color = {255, data, data};
+
+
+assign led[0:2] = ram1_addr;
+assign led[3:5] = ram2_addr;
 
 
 
-always @(posedge pxClk or negedge I_rst_n) begin
-    if(!I_rst_n) 
-        colors <= 24'd0;
-    else begin
-        colors <= {buffer[0][3:0], buffer[1][3:0], buffer[2][3:0], buffer[3][3:0], buffer[4][3:0], buffer[5][3:0]};
-        /*case(hor[7:5])
-            3'b000: colors <= WHITE;
-            3'b001: colors <= YELLOW;
-            3'b010: colors <= CYAN;
-            3'b011: colors <= GREEN;
-            3'b100: colors <= MAGENTA;
-            3'b101: colors <= RED;
-            3'b110: colors <= BLUE;
-            3'b111: colors <= BLACK;
-            default: colors <= BLUE; // Default to black for undefined values
-        endcase*/
-    end
-end
 
 endmodule
