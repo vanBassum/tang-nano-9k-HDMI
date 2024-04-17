@@ -8,7 +8,8 @@ module video_controller (
     output     [11:0] O_ver_cnt,        // Vertical counter output
     output     [11:0] O_hor_cnt,        // Horizontal counter output
     input      [23:0] I_color_data,     // Input color data
-    output            O_px_clk          // Pixel clock output
+    output            O_px_clk,         // Pixel clock output
+    output            O_blanking        
 );
 
 // Parameters for video timings
@@ -219,6 +220,8 @@ CLKDIV u_clkdiv(
 
 defparam u_clkdiv.DIV_MODE="5";
 defparam u_clkdiv.GSREN="false";
+
+assign O_blanking = tp0_vs_in | tp0_hs_in;
 
 // DVI TX instantiation
 DVI_TX_Top DVI_TX_Top_inst
