@@ -7,8 +7,14 @@ module video_top (
     output     [2:0]  O_tmds_data_n   ,
     input               uart_rx       ,
     output              uart_tx       ,
-    output     [0:5]  led
+    output     [0:5]  led,
 
+    output [1:0] O_psram_ck,       // Magic ports for PSRAM to be inferred
+    output [1:0] O_psram_ck_n,
+    inout [1:0] IO_psram_rwds,
+    inout [15:0] IO_psram_dq,
+    output [1:0] O_psram_reset_n,
+    output [1:0] O_psram_cs_n
 );
 
 
@@ -24,6 +30,7 @@ Control control
     .sel(ctrl_sel)
 );
 
+
 wire [7:0] ctrl_data;
 wire [3:0] ctrl_addr;
 wire       ctrl_wr;
@@ -36,15 +43,23 @@ ram myRam1(
     .wr(ram1_wr),
     .address(ram1_addr),
     .data_in(ram1_din),
-    .data_out(ram1_dout)
+    .data_out(ram1_dout),
+
+    .O_psram_ck(O_psram_ck),       // Magic ports for PSRAM to be inferred
+    .O_psram_ck_n(O_psram_ck_n),
+    .IO_psram_rwds(IO_psram_rwds),
+    .IO_psram_dq(IO_psram_dq),
+    .O_psram_reset_n(O_psram_reset_n),
+    .O_psram_cs_n(O_psram_cs_n)
+
 );
 
-wire       ram1_clk;
-reg       ram1_oe;
-reg       ram1_wr;
-reg [3:0] ram1_addr;
-reg [7:0] ram1_din;
-wire [7:0] ram1_dout;
+wire        ram1_clk;
+reg         ram1_oe;
+reg         ram1_wr;
+reg  [21:0] ram1_addr;
+reg  [15:0] ram1_din;
+wire [15:0] ram1_dout;
 
 
 // Instantiate video_controller module (assuming its definition is included or defined elsewhere)
@@ -65,7 +80,7 @@ video_controller video(
 
 wire [11:0] video_ver;
 wire [11:0] video_hor;
-reg [23:0] video_color;
+reg  [23:0] video_color;
 wire        video_pxClk;
 wire        video_blanking;
 
@@ -122,7 +137,6 @@ always @(posedge clearWork or posedge setWork) begin
         end
     end
 end
-
 
 endmodule
 

@@ -8,6 +8,8 @@
         <File path="src/control.v" type="file.verilog" enable="1"/>
         <File path="src/dvi_tx/dvi_tx.v" type="file.verilog" enable="1"/>
         <File path="src/gowin_rpll/TMDS_rPLL.v" type="file.verilog" enable="1"/>
+        <File path="src/gowin_rpll2/gowin_rpll2.v" type="file.verilog" enable="1"/>
+        <File path="src/psram.v" type="file.verilog" enable="1"/>
         <File path="src/ram.v" type="file.verilog" enable="1"/>
         <File path="src/uart_rx.v" type="file.verilog" enable="1"/>
         <File path="src/uart_tx.v" type="file.verilog" enable="1"/>
