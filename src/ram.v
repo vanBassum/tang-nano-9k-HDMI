@@ -11,20 +11,15 @@ module ram (
     inout [1:0] IO_psram_rwds,
     inout [15:0] IO_psram_dq,
     output [1:0] O_psram_reset_n,
-    output [1:0] O_psram_cs_n,
-
-    output c1,
-    output c2
+    output [1:0] O_psram_cs_n
 );
+
 
 localparam FREQ = 74_250_000;      // Matches pixel clock
 localparam LATENCY = 3;
 
 wire clkout_o;
 wire clkoutp_o;
-
-assign c1 = clkout_o;
-assign c2 = clkoutp_o;
 
 Gowin_rPLL2 your_instance_name(
     .clkout(clkout_o), //output clkout

@@ -7,7 +7,7 @@ module video_top (
     output     [2:0]  O_tmds_data_n   ,
     input               uart_rx       ,
     output              uart_tx       ,
-    output     [0:5]  led,
+    output  reg   [0:5]  led,
 
     output [1:0] O_psram_ck,       // Magic ports for PSRAM to be inferred
     output [1:0] O_psram_ck_n,
@@ -50,20 +50,8 @@ ram myRam1(
     .IO_psram_rwds(IO_psram_rwds),
     .IO_psram_dq(IO_psram_dq),
     .O_psram_reset_n(O_psram_reset_n),
-    .O_psram_cs_n(O_psram_cs_n),
-
-    .c1(led[0]),
-    .c2(led[1])
-
+    .O_psram_cs_n(O_psram_cs_n)
 );
-
-wire        ram1_clk;
-reg         ram1_oe;
-reg         ram1_wr;
-reg  [21:0] ram1_addr;
-reg  [15:0] ram1_din;
-wire [15:0] ram1_dout;
-
 
 // Instantiate video_controller module (assuming its definition is included or defined elsewhere)
 video_controller video(
@@ -86,60 +74,26 @@ wire [11:0] video_hor;
 reg  [23:0] video_color;
 wire        video_pxClk;
 wire        video_blanking;
+    
+wire        ram1_clk;
+wire        ram1_oe;
+wire        ram1_wr;
+wire [21:0] ram1_addr;
+wire [15:0] ram1_din;
+wire [15:0] ram1_dout;
 
 
-reg         work;
-reg [3:0]   addr;
-reg [7:0]   data;
-
-reg setWork;
-reg clearWork;
-
-
-always @(posedge I_clk) begin
-    if(ctrl_wr == 1) begin
-        setWork <= 1;
-        data <= ctrl_data;
-        addr <= ctrl_addr;
-    end else begin
-        setWork <= 0;
-    end
-end
-
-
-assign ram1_clk = video_pxClk;
+assign ram1_clk     = video_blanking ? I_clk : video_pxClk;
+assign ram1_oe      = video_blanking ? 0 : 1;
+assign ram1_wr      = video_blanking ? ctrl_wr : 0;
+assign ram1_addr    = video_blanking ? ctrl_addr : video_hor[9:6];
+assign ram1_din     = {ctrl_data, 0};
 
 always @(posedge video_pxClk) begin
-    if(video_blanking == 1) begin
-        if(work == 1) begin
-            ram1_wr <= 1;
-            ram1_addr <= addr;
-            ram1_din  <= data;
-            clearWork <=1;
-        end else begin
-            ram1_wr <= 0;
-            clearWork <=0;
-        end
-        ram1_oe <= 0;
-    end else begin
-        clearWork <=0;
-        ram1_wr <= 0;
-        ram1_oe <= 1;
-        ram1_addr <= video_hor[8:5];
-        video_color = {255, ram1_dout};
-    end
+    video_color <= {0, ram1_dout};
 end
 
 
-always @(posedge clearWork or posedge setWork) begin
-    if(setWork) begin
-        work <= 1;
-    end else begin
-        if(clearWork) begin
-            work <= 0;
-        end
-    end
-end
 
 endmodule
 
